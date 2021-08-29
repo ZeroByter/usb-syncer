@@ -9,13 +9,15 @@ namespace USB_Syncer
     {
         private static bool cancelAutoClose = false;
 
-        private static async void BeginAutoClose()
+        private static async void BeginAutoClose(bool didAnyWork)
         {
-            for(var i = 0; i < 5; i++)
+            var seconds = didAnyWork ? 5 : 3;
+
+            for(var i = 0; i < seconds; i++)
             {
                 if (cancelAutoClose) return;
 
-                Console.WriteLine($"Auto-closing in {5 - i} seconds");
+                Console.WriteLine($"Auto-closing in {seconds - i} seconds");
                 await Task.Delay(1000);
             }
 
@@ -38,19 +40,24 @@ namespace USB_Syncer
                 string path = lineData[1].TrimStart('\\', '/');
                 path = Path.Combine(driveName, path);
 
-                if (Directory.Exists(path))
+                if (!Directory.Exists(path))
                 {
-                    string[] filePaths = Directory.GetFiles(path);
-                    FileInfo[] files = new FileInfo[filePaths.Length];
-
-                    for (int i = 0; i < filePaths.Length; i++)
-                    {
-                        string filePath = filePaths[i];
-                        files[i] = new FileInfo(filePath);
-                    }
-
-                    folders.Add(new FilesFolder(name, path, files));
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"Creating non-existent directory - {path}");
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Directory.CreateDirectory(path);
                 }
+
+                string[] filePaths = Directory.GetFiles(path);
+                FileInfo[] files = new FileInfo[filePaths.Length];
+
+                for (int i = 0; i < filePaths.Length; i++)
+                {
+                    string filePath = filePaths[i];
+                    files[i] = new FileInfo(filePath);
+                }
+
+                folders.Add(new FilesFolder(name, path, files));
             }
 
             return folders;
@@ -82,8 +89,14 @@ namespace USB_Syncer
             var folders = new List<FilesFolder>();
             DriveInfo[] drives = DriveInfo.GetDrives();
 
-            foreach(var drive in drives){
-                var fullPath = Path.Combine(drive.Name, "USBSyncer.txt");
+#if DEBUG
+            string targetFileName = "USBSyncer-d.txt";
+#else
+            string targetFileName = "USBSyncer.txt";
+#endif
+
+            foreach (var drive in drives){
+                var fullPath = Path.Combine(drive.Name, targetFileName);
 
                 if(File.Exists(fullPath))
                 {
@@ -129,7 +142,7 @@ namespace USB_Syncer
                             {
                                 didAnyWork = true;
 
-                                File.Copy(file2Path, file2Path + ".usbb", true);
+                                if(File.Exists(file2Path)) File.Copy(file2Path, file2Path + ".usbb", true);
                                 File.Copy(file1Path, file2Path, true);
 
                                 Console.ForegroundColor = ConsoleColor.Green;
@@ -158,7 +171,7 @@ namespace USB_Syncer
                 Console.ForegroundColor = ConsoleColor.White;
             }
 
-            BeginAutoClose();
+            BeginAutoClose(didAnyWork);
 
             Console.ReadKey();
 
