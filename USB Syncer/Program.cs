@@ -63,6 +63,11 @@ namespace USB_Syncer
             return folders;
         }
 
+        private static bool ShouldConsiderMovingFile(string file1, string file2)
+        {
+            return !file2.EndsWith(".usbb") && Path.GetFileName(file1).ToLower() != Path.GetFileName(file2).ToLower();
+        }
+
         private static bool ShouldMoveFile(FileInfo file1, FileInfo file2, out List<string> reasons)
         {
             reasons = new List<string>();
@@ -138,7 +143,7 @@ namespace USB_Syncer
                             var file1 = pair.Value.GetFile(file1Path);
                             var file2 = pair.Value.GetFile(file2Path);
 
-                            if (!file2Path.EndsWith(".usbb") && ShouldMoveFile(file1, file2, out List<string> reasons))
+                            if (ShouldConsiderMovingFile(file1Path, file2Path) && ShouldMoveFile(file1, file2, out List<string> reasons))
                             {
                                 didAnyWork = true;
 
@@ -175,6 +180,7 @@ namespace USB_Syncer
 
             Console.ReadKey();
 
+            Console.CursorLeft = 0;
             Console.WriteLine("Canceled auto-close. Press any key again to close.");
             cancelAutoClose = true;
 
