@@ -65,7 +65,10 @@ namespace USB_Syncer
 
         private static bool ShouldConsiderMovingFile(string file1, string file2)
         {
-            return !file2.EndsWith(".usbb") && Path.GetFileName(file1).ToLower() != Path.GetFileName(file2).ToLower();
+            var file1Name = Path.GetFileName(file1);
+            var file2Name = Path.GetFileName(file2);
+
+            return !file2.EndsWith(".usbb");// && (file1Name.ToLower() == file1Name.ToLower() && file1Name != file2Name);
         }
 
         private static bool ShouldMoveFile(FileInfo file1, FileInfo file2, out List<string> reasons)
