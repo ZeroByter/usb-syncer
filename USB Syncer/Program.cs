@@ -40,7 +40,12 @@ namespace USB_Syncer
                 string path = lineData[1].TrimStart('\\', '/');
                 path = Path.Combine(driveName, path);
 
-                if (!Directory.Exists(path))
+                if (File.Exists(path))
+                {
+                    folders.Add(new FilesFolder(name, path, new FileInfo[] { new FileInfo(path) }));
+                    continue; //skip the rest of this loop, dont try to parse the directory and files (because this is not a directory, it's a single file...
+                }
+                else if (!Directory.Exists(path))
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine($"Creating non-existent directory - {path}");
